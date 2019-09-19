@@ -7,6 +7,7 @@ import com.zhangyu.coderman.modal.User;
 import com.zhangyu.coderman.myenums.CustomizeErrorCode;
 import com.zhangyu.coderman.myenums.QuestionErrorEnum;
 import com.zhangyu.coderman.service.QuestionService;
+import com.zhangyu.coderman.service.TopicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,11 +23,16 @@ public class PublishController {
     @Autowired
     private QuestionService questionService;
 
+    @Autowired
+    private TopicService topicService;
+
     @GetMapping("/publish")
     public String publish(Map<String,Object> map, Model model) {
         //Tags
         List<TagsCache> tagsCache = TagsCache.getTagsCache();
         model.addAttribute("tagsCache",tagsCache);
+        //话题数据
+        map.put("topiclist",topicService.listAllTopic());
         map.put("navLi","publish");
         return "publish";
     }
@@ -48,6 +54,7 @@ public class PublishController {
                                    @RequestParam("tag") String tag, HttpServletRequest request,
                                    @RequestParam(name = "id",required = false) Integer id,
                                    @RequestParam(name="category") Integer category,
+                                   @RequestParam(name="topic",required = false) Integer topic,
                                    Map<String, Object> map, Model model) {
         User user = (User) request.getSession().getAttribute("user");
         //验证用户登入
@@ -74,12 +81,12 @@ public class PublishController {
         question.setCreator(user.getId());
         question.setId(id);
         question.setCategory(category);
-
+        question.setTopic(topic);
+        question.setUser(user);
         ResultTypeDTO result= null;
         try {
-            result = questionService.saveOrUpdate(question,user.getId());
+            result = questionService.saveOrUpdate(question);
         } catch (Exception e) {
-
             return  new ResultTypeDTO().errorOf(CustomizeErrorCode.NOT_ADD_OTHER_BQ);
         }
         //questionService.doPublish(question);

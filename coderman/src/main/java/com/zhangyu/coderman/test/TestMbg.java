@@ -2,7 +2,9 @@ package com.zhangyu.coderman.test;
 
 import com.zhangyu.coderman.controller.AuthorizeController;
 import com.zhangyu.coderman.dto.ResultTypeDTO;
+import com.zhangyu.coderman.modal.Question;
 import com.zhangyu.coderman.myenums.CustomizeErrorCode;
+import com.zhangyu.coderman.myenums.QuestionSortType;
 import org.junit.Test;
 import org.mybatis.generator.api.MyBatisGenerator;
 import org.mybatis.generator.config.Configuration;
@@ -25,10 +27,13 @@ public class TestMbg {
         MyBatisGenerator myBatisGenerator = new MyBatisGenerator(config, callback, warnings);
         myBatisGenerator.generate(null);
     }
-
     @Test
     public void testprint(){
         String s = AuthorizeController.encryptPasswordWithSHA512("14876_1_1481673726_srzpDr45DsmSvbV3xnVfFRIYq9URgPxN");
         System.out.println(s);
+    }
+    @Test
+    public void testenum(){
+        System.out.println(QuestionSortType.ALL.name().equals("ALL"));
     }
 }

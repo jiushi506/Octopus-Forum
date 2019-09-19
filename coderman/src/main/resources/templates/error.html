@@ -6,40 +6,36 @@
     <title>[[${errormessage}]]</title>
     <link rel="stylesheet" href="/index.css">
     <link rel="stylesheet" href="webjars/bootstrap/3.3.5/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/3.3.5/css/bootstrap.min.css}"/>
-    <link rel="stylesheet" th:href="@{/css/editormd.preview.css}"/>
-    <link rel="stylesheet" th:href="@{/css/flat-ui.min.css}">
-    <script  th:src="@{/js/flat-ui.min.js}"></script>
 </head>
 <body>
 <style>
-    body,html{
-        width: 100%;
-        padding: 0px;
-        height: 100%;
-        margin: 0px;
-        overflow-y:auto;
-        background-color: #fff;
-        background-image: url("/images/bg/bg02.png");
+    body{
+        background-color: #f4f4f4;
     }
+    *{
+        margin: 0px;
+        padding: 0px;
+    }
+    .my{margin-top: 100px;}
 </style>
 <!--引入导航条-->
 <div th:insert="~{navbar :: navbar}"></div>
-<div class="container">
-    <div class="jumbotron">
+<script type="text/javascript" th:src="@{/js/test-clear.js}" opacity= 0.6></script>
+<div class="container my text-center">
+    <div>
         <br>
         <br>
         <br>
-        <h1>出错了~, 鸭!</h1><br>
+        <h1>抱歉服务器，又炸了,杀个程序员祭天~</h1><br>
         <br>
         <p th:text="${errormessage}">...</p>
-
         <br>
-        <p><a class="btn btn-primary btn-lg" th:href="@{/}" role="button">返回首页</a></p>
+        <br>
+        <br>
+        <br>
+         <a class="btn btn-primary btn-lg" th:href="@{/}" role="button">狠心离开</a></p>
     </div>
 </div>
-<!--页尾-->
-<div th:insert="~{navbar :: navbottom}"></div>
-
 <script src="webjars/jquery/3.1.1/jquery.min.js" th:src="@{/webjars/jquery/3.1.1/jquery.min.js}"></script>
 <script src="webjars/bootstrap/3.3.5/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/3.3.5/js/bootstrap.min.js}"></script>
 

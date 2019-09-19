@@ -37,7 +37,7 @@ public class FollowController {
     public ResultTypeDTO idFollowed(@RequestParam("id") Integer id, HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
         if (user == null) {
-            return new ResultTypeDTO().errorOf(CustomizeErrorCode.USER_NO_LOGIN);
+            return new ResultTypeDTO().errorOf(CustomizeErrorCode.FOLLOW_NEED_LOGIN);
         } else {
             FollowExample example = new FollowExample();
             FollowExample.Criteria criteria = example.createCriteria();
@@ -58,7 +58,7 @@ public class FollowController {
     public ResultTypeDTO follow(@RequestParam("id") Integer id, HttpServletRequest request) {
         User user = (User) request.getSession().getAttribute("user");
         if (user == null) {
-            return new ResultTypeDTO().errorOf(CustomizeErrorCode.USER_NO_LOGIN);
+            return new ResultTypeDTO().errorOf(CustomizeErrorCode.FOLLOW_NEED_LOGIN);
         }
         User dbUser = userMapper.selectByPrimaryKey(id);
         if (dbUser == null) {

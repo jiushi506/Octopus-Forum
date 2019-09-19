@@ -10,6 +10,7 @@ import com.zhangyu.coderman.dto.ResultTypeDTO;
 import com.zhangyu.coderman.exception.CustomizeException;
 import com.zhangyu.coderman.modal.Question;
 import com.zhangyu.coderman.myenums.CustomizeErrorCode;
+import com.zhangyu.coderman.myenums.QuestionSortType;
 import com.zhangyu.coderman.service.QuestionService;
 import com.zhangyu.coderman.service.UserService;
 import org.slf4j.Logger;
@@ -84,15 +85,17 @@ public class IndexController {
         map.put("tag", tag);
         map.put("search", search);
         map.put("category", category);
+        map.put("navLi","find");
         return "index";
     }
 
+    //ajax加载问题列表
     @ResponseBody
     @GetMapping("/loadQuestionList")
-    public ResultTypeDTO listQuestion(@RequestParam(name = "sortby", defaultValue = "all") String sort,
+    public ResultTypeDTO listQuestion(@RequestParam(name = "sortby", defaultValue = "ALL") String sort,
                                       @RequestParam(name = "search", required = false) String search,
                                       @RequestParam(name = "tag", required = false) String tag,
-                                      @RequestParam(name = "pageSize", defaultValue = "12") Integer pageSize,
+                                      @RequestParam(name = "pageSize", defaultValue = "35") Integer pageSize,
                                       @RequestParam(name = "pageNo", defaultValue = "1") Integer pageNo,
                                       @RequestParam(name = "category", defaultValue = "0") String categoryStrVal,
                                       HttpServletRequest request) {
@@ -108,12 +111,13 @@ public class IndexController {
         questionQueryDTO.setSort(sort);
         questionQueryDTO.setTag(tag);
         questionQueryDTO.setCategory(category);
-        PageInfo<Question> questionPageInfo = questionService.getPageBySearch(questionQueryDTO, pageNo, pageSize);
+        questionQueryDTO.setPageNo(pageNo);
+        questionQueryDTO.setPageSize(pageSize);
+        PageInfo<Question> questionPageInfo = questionService.getPageBySearch(questionQueryDTO);
         request.getSession().setAttribute("category", category);//全部
         return new ResultTypeDTO().okOf().addMsg("page", questionPageInfo);
     }
-
-
+    //加载右边的数据
     @ResponseBody
     @GetMapping("/loadRightList")
     public ResultTypeDTO loadRightList() {
@@ -132,6 +136,4 @@ public class IndexController {
                 .addMsg("newQuestions", NewQuestions)
                 .addMsg("recommend", RecommendQuestions);
     }
-
-
 }

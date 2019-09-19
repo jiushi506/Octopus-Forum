@@ -1,9 +1,6 @@
 package com.zhangyu.coderman.controller;
 
-import com.zhangyu.coderman.dao.CommentMapper;
-import com.zhangyu.coderman.dao.NotificationMapper;
-import com.zhangyu.coderman.dao.QuestionExtMapper;
-import com.zhangyu.coderman.dao.QuestionMapper;
+import com.zhangyu.coderman.dao.*;
 import com.zhangyu.coderman.dto.CommentDTO;
 import com.zhangyu.coderman.dto.ResultTypeDTO;
 import com.zhangyu.coderman.exception.CustomizeException;
@@ -41,6 +38,9 @@ public class QuestionController {
 
     @Autowired
     private QuestionExtMapper questionExtMapper;
+
+    @Autowired
+    private CollectMapper collectMapper;
     /**
      * 问题详情
      * @param idstr
@@ -67,9 +67,12 @@ public class QuestionController {
         questionService.incViewCount(question);
         //评论信息
         List<CommentDTO> commentDTOS = questionService.findQuestionComments(question.getId());
+        //收藏该问题的人
+        List<User> collectUsers=questionService.findCollectUsers(question.getId());
 
         map.put("comments", commentDTOS);
         map.put("question", question);
+        map.put("collect_users",collectUsers);
         map.put("relatedQuestions", relatedQuestions);
         return "question";
     }
@@ -143,6 +146,62 @@ public class QuestionController {
             return new ResultTypeDTO().errorOf(CustomizeErrorCode.CANT_LIKE_YOURSELF_QUESTION);
         }
         return new ResultTypeDTO().okOf().addMsg("likequestioncount",dbQuestion.getLikeCount()+1);
+    }
+    //收藏问题
+    @GetMapping("/doCollect")
+    @ResponseBody
+    public ResultTypeDTO doCollect(@RequestParam("id") Integer id,HttpServletRequest request){
+        User user = (User) request.getSession().getAttribute("user");
+        if(user==null){
+            return new ResultTypeDTO().errorOf(CustomizeErrorCode.USER_NO_LOGIN);
+        }else {
+            //判断是否有该问题
+            Question dbQuestion = questionMapper.selectByPrimaryKey(id);
+            if(dbQuestion==null){
+                return new ResultTypeDTO().errorOf(CustomizeErrorCode.QUESTION_NOT_FOUND);
+            }
+            //判断是否已经收藏
+            CollectExample collectExample = new CollectExample();
+            CollectExample.Criteria criteria = collectExample.createCriteria();
+            criteria.andUserIdEqualTo(user.getId());
+            criteria.andQuestionIdEqualTo(id);
+            int i = collectMapper.countByExample(collectExample);
+            if(i>0){
+                return new ResultTypeDTO().errorOf(CustomizeErrorCode.YOU_COLLECTED_QUESTION);
+            }else {
+                //收藏
+                Collect collect = new Collect();
+                collect.setGmtCreate(System.currentTimeMillis());
+                collect.setGmtModified(System.currentTimeMillis());
+                collect.setQuestionId(id);
+                collect.setUserId(user.getId());
+                collectMapper.insert(collect);
+            }
+        }
+        return new ResultTypeDTO().okOf();
+    }
+    //取消收藏
+    @ResponseBody
+    @GetMapping("/deleteCollect")
+    public ResultTypeDTO deleteCollect(@RequestParam("id") Integer id,HttpServletRequest request){
+        User user = (User) request.getSession().getAttribute("user");
+        if(user==null){
+            return new ResultTypeDTO().errorOf(CustomizeErrorCode.USER_NO_LOGIN);
+        }else{
+            //判读是否存在该question
+            Question dbQuestion = questionMapper.selectByPrimaryKey(id);
+            if(dbQuestion==null){
+                return new ResultTypeDTO().errorOf(CustomizeErrorCode.QUESTION_NOT_FOUND);
+            }else {
+                //删除关注
+                CollectExample collectExample = new CollectExample();
+                CollectExample.Criteria criteria = collectExample.createCriteria();
+                criteria.andUserIdEqualTo(user.getId());
+                criteria.andQuestionIdEqualTo(id);
+                collectMapper.deleteByExample(collectExample);
+            }
+        }
+        return new ResultTypeDTO().okOf();
     }
 
 }

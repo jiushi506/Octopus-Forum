@@ -9,9 +9,7 @@ import com.zhangyu.coderman.myenums.CustomizeErrorCode;
 import com.zhangyu.coderman.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,7 +27,7 @@ public class PeopleController {
 
     @GetMapping("/people")
     public String people(@RequestParam(name = "id",required = true) String id, Map<String,Object> map,
-                         @RequestParam(name = "pageSize",defaultValue = "5") Integer pageSize,
+                         @RequestParam(name = "pageSize",defaultValue = "8") Integer pageSize,
                          @RequestParam(name = "pageNo",defaultValue = "1") Integer pageNo,HttpServletRequest request
                          ){
         User loginUser = (User) request.getSession().getAttribute("user");
@@ -40,7 +38,7 @@ public class PeopleController {
            throw  new CustomizeException(CustomizeErrorCode.PEOPLE_DOT_HAVE);
         }
         if(loginUser!=null&&loginUser.getId().toString().equals(id)){
-         return "redirect:/profile/questions";
+         return "redirect:/profile";
         }
         //他的问题
         PageInfo<Question> myquestionPageInfo=null;

@@ -11,21 +11,18 @@
     <nav class="navbar navbar-default">
         <div class="container">
             <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
-                        data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" th:href="@{/}">章鱼问答</a>
+                <a class="navbar-brand" th:href="@{/}">章鱼社区</a>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <li th:class="${navLi=='find'? 'active':'' }"><a th:href="@{/}">发现 <span
-                            class="sr-only">(current)</span></a></li>
-                    <li><a href="#">话题</a></li>
-                    <li><a href="https://github.com/zykzhangyukang/CoderMan_SpringBoot">关于</a></li>
+                    <li th:class="${navLi=='find'? 'active':'' }"><a th:href="@{/}">发现 <span class="sr-only">(current)</span></a></li>
+                    <li th:class="${navLi=='topic'? 'active':'' }"><a th:href="@{/topic}" href="#">话题</a></li>
                 </ul>
                 <form class="navbar-form navbar-left" th:action="@{/}" method="get">
                     <div class="form-group">
@@ -33,12 +30,18 @@
                     </div>
                     <button type="submit" class="btn btn-default">搜索</button>
                 </form>
+                <!--导航栏广告链接-->
+                <ul class="nav navbar-nav">
+                    <li th:class="${navLi=='chat'? 'active':'' }"><a th:href="@{/chat}" href="#">闲聊</a></li>
+                    <li th:each="ad:${#session.getAttribute('NAV')}"><a target="_blank" th:href="${ad.url}" th:text="${ad.title}">源码</a></li>
+                </ul>
+
                 <ul class="nav navbar-nav navbar-right">
                     <li th:class="${navLi=='publish'? 'active':'' }"><a href="#" th:href="@{/publish}">发起</a></li>
                     <li>
-                        <a href="#" th:href="@{/profile/replies}">
+                        <a href="#" th:href="@{/profile?action=replies}">
                             <span style="font-size: 18px;" class="iconfont icon-tongzhi1"></span>
-                            <span th:if="${session.unreadcount>0}" class="badge" style="background: red"
+                            <span th:if="${session.unreadcount>0}" class="badge" style="background: #f40"
                                   th:text="${session.unreadcount}"></span>
                         </a>
                     </li>
@@ -48,27 +51,20 @@
                             <img class="img-rounded" width="20px" th:src="${session.user.getAvatarUrl()}" alt="...">
                             <span class="caret"></span></a>
                         <ul class="dropdown-menu">
-                            <li><a th:href="@{/profile/questions}">我的问题</a></li>
-                            <li><a href="#" th:href="@{/profile/replies}">我的通知</a></li>
-                            <li><a th:href="@{/profile/follows}">关注的人</a></li>
+                            <li><a th:href="@{/profile}">我的主页</a></li>
                             <li role="separator" class="divider"></li>
                             <li><a th:href="@{/logout}">退出登入</a></li>
                         </ul>
                     </li>
-                    <!--<li th:if="${session.user==null}"><a-->
-                            <!--href="https://github.com/login/oauth/authorize?client_id=3be4be948cb514955d2b&redirect_uri=http://www.zykcoderman.xyz/callback&scope=user&state=1">登入</a>-->
-                    <!--</li>-->
-                    <li th:if="${session.user==null}"><a href="https://github.com/login/oauth/authorize?client_id=560ee5ccb51b58065ff1&redirect_uri=http://localhost:8080/callback&scope=user&state=1">登入</a>
+                    <li th:if="${session.user==null}"><a class="login_btn">登入</a></a>
                     </li>
-
+                    <!--<li th:if="${session.user==null}"><a th:href="${#request.getServletContext().getAttribute('loginUrl')}">登入</a>-->
+                    <!--</li>-->
                 </ul>
             </div>
         </div>
     </nav>
 </div>
 
-<div th:fragment="navbottom" class="container text-center" style="padding-top:20px;font-size:14px;color: #666;padding-bottom: 10px;">
-    Copyright © 2019 · 章鱼问问 · 服务赞助. 阿里云 · <a style="text-decoration: none;" href="http://www.beian.miit.gov.cn/">赣ICP备19010919号-1</a>
-</div>
 </body>
 </html>

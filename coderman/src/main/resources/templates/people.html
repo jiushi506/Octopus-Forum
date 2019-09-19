@@ -4,21 +4,23 @@
     <meta charset="UTF-8">
     <title></title>
     <link rel="stylesheet" th:href="@{/css/iconfont.css}">
+    <link rel="stylesheet" th:href="@{/css/my.css}">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <link rel="stylesheet" href="webjars/bootstrap/3.3.5/css/bootstrap.min.css"
-          th:href="@{/webjars/bootstrap/3.3.5/css/bootstrap.min.css}"/>
-    <link rel="stylesheet" th:href="@{/css/flat-ui.min.css}">
+    <link rel="stylesheet" href="webjars/bootstrap/3.3.5/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/3.3.5/css/bootstrap.min.css}"/>
     <script src="webjars/jquery/3.1.1/jquery.min.js" th:src="@{/webjars/jquery/3.1.1/jquery.min.js}"></script>
     <script src="webjars/bootstrap/3.3.5/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/3.3.5/js/bootstrap.min.js}"></script>
-    <script  th:src="@{/js/flat-ui.min.js}"></script>
+    <script th:src="@{/layer/layer.js}"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({
+            google_ad_client: "ca-pub-5294687859556356",
+            enable_page_level_ads: true
+        });
+    </script>
 </head>
 <style>
     .pagination{
         background: #cccccc;
-    }
-    body,html{
-        width: 100%;height: 100%;background-color: #fff;
-        background-image: url("/images/bg/bg02.png");
     }
     .main{background-color: #fff;border-radius: 10px;padding-top: 10px;}
 </style>
@@ -28,8 +30,38 @@
 <!--内容部分-->
 <div class="container main">
     <div class="row" style="margin-right:10px;margin-left: 10px;">
+
+        <div class="col-lg-3 col-md-12 col-sm-12 rightwrapper" style="height: 800px; padding-top: 20px">
+                <!--右边部分-->
+                <div class="col-lg-12 col-md-12 col-sm-12" style="background-color: #FFFFFF">
+                    <!--发起人信息-->
+                    <h6 style="color:#333;">用户信息:</h6>
+                    <img class="img-rounded" width="100%;" th:src="${people.avatarUrl}">
+                    <br>
+                    <br>
+                    <br>
+                    <div style="font-size: 11px;">
+                        <span>昵称:</span>
+                        <span style="font-size:12px;color: #155faa;" th:text="${people.name}"></span><br>
+                        <span>公司:</span>
+                        <span style="font-size:12px;color: #155faa;" th:text="${people.company}"></span><br>
+                        <span>所在地:</span>
+                        <span style="font-size:12px;color: #155faa;" th:text="${people.location}"></span><br>
+                        <span>个人简介:</span>
+                        <span style="font-size:12px;color: #155faa;" th:text="${people.bio}"></span><br>
+                        <br>
+                        <br>
+                        <br>
+                            <a style="width:100%;" class="" th:data-uid="${people.id}" follow="" onclick="followHim(this)" th:id="followcontent">
+                                <span class="fui-plus"></span>关注
+                            </a>
+                    </div>
+                    <hr th:height="1px">
+                </div>
+            </div>
         <div class="col-lg-9 col-md-12 col-sm-12">
-            <strong>他的问题:</strong>
+            <strong th:if="${page.size>0}">他的问题:</strong>
+            <h2 style="margin-top: 200px;margin-left: 100px;" th:if="${page.size==0}">这个人很懒~，暂时还没问题 ~</h2>
             <div th:each="question:${page.list}" class="media question">
                 <div class="media-left">
                     <a th:href="@{/people/}+${question.creator}">
@@ -68,47 +100,16 @@
             </nav>
 
         </div>
-        <div class="col-lg-3 col-md-12 col-sm-12 rightwrapper" style="height: 800px; padding-top: 20px">
-                <!--右边部分-->
-                <div class="col-lg-12 col-md-12 col-sm-12" style="background-color: #FFFFFF">
-                    <!--发起人信息-->
-                    <h6 style="color:#333;">用户信息:</h6>
-                    <img class="img-rounded" width="80px;" th:src="${people.avatarUrl}">
-                    <br>
-                    <br>
-                    <br>
-                    <div style="font-size: 11px;">
-
-                        <span>昵称:</span>
-                        <span style="font-size:12px;color: #155faa;" th:text="${people.name}"></span><br>
-                        <span>公司:</span>
-                        <span style="font-size:12px;color: #155faa;" th:text="${people.company}"></span><br>
-                        <span>所在地:</span>
-                        <span style="font-size:12px;color: #155faa;" th:text="${people.location}"></span><br>
-                        <span>个人简介:</span>
-                        <span style="font-size:12px;color: #155faa;" th:text="${people.bio}"></span><br>
-                            <a style="width:100px;" class="btn btn-danger btn-sm btn-block" th:data-uid="${people.id}" follow="" onclick="followHim(this)" th:id="followcontent">
-                                <span class="fui-plus"></span>关注
-                            </a>
-                    </div>
-                    <hr th:height="1px">
-                </div>
-            </div>
 
     </div>
 </div>
 <!--页尾-->
-<div th:insert="~{navbar :: navbottom}"></div>
+<div th:insert="~{footer :: footer}"></div>
 </body>
-</html>
 <script th:src="@{/js/sweetalert.min.js}"></script>
+</html>
+
 <script>
-    $(function () {
-        var isopen=false;
-        $("#me").click(function () {
-            $(this).toggleClass("open");
-        })
-    })
     $(function () {
         //判断该用户是否被当前登入的用户关注
         var url = "/isFollowed";
@@ -116,7 +117,7 @@
         var args = {"id": id, "time:": new Date()};
         $.get(url, args, function (data) {
             if(data.code==2000){
-                $("#followcontent").hide();
+                //$("#followcontent").hide();
             }
             //如果已关注
             if (data.extend.status == 1) {
@@ -147,14 +148,15 @@
                     $("#followcontent").removeClass("btn btn-danger");
                     $("#followcontent").addClass("btn btn-success");
                 } else {
-                    swal(data.message, data.message, "error")
+                    layer.msg(data.message, {time: 1800, icon: 5, shift: 6}, function () {
+                    });
                 }
             })
         } else {
             var id = e.getAttribute("data-uid");
             var url = "/deleteFollow";
             var args = {"id": id, "time:": new Date()};
-            if (confirm("是否要取消关注")) {
+
                 $.get(url, args, function (data) {
                     if (data.code == 1000) {
                         swal("取消关注", "谢谢你的支持~", "success")
@@ -166,7 +168,7 @@
                         swal(data.message, data.message, "error")
                     }
                 })
-            }
+
             ;
             return false;
         }

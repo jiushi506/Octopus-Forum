@@ -6,6 +6,9 @@ public class QuestionQueryDTO {
     private long beginTime;
     private long endTime;
     private Integer category;
+    private Integer pageNo;
+    private Integer pageSize;
+
 
     public Integer getCategory() {
         return category;
@@ -13,6 +16,22 @@ public class QuestionQueryDTO {
 
     public void setCategory(Integer category) {
         this.category = category;
+    }
+
+    public Integer getPageNo() {
+        return pageNo;
+    }
+
+    public void setPageNo(Integer pageNo) {
+        this.pageNo = pageNo;
+    }
+
+    public Integer getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(Integer pageSize) {
+        this.pageSize = pageSize;
     }
 
     private String sort;

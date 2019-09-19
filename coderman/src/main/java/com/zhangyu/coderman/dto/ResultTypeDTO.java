@@ -44,7 +44,6 @@ public class ResultTypeDTO {
 
     public ResultTypeDTO addMsg(String key, Object value){
         this.extend.put(key,value);
-
         return this;
     }
     public String getCode() {

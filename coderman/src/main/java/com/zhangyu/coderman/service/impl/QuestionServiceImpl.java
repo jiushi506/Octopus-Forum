@@ -3,24 +3,18 @@ package com.zhangyu.coderman.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.zhangyu.coderman.cache.HotTagCache;
-import com.zhangyu.coderman.dao.CommentMapper;
-import com.zhangyu.coderman.dao.QuestionExtMapper;
-import com.zhangyu.coderman.dao.QuestionMapper;
-import com.zhangyu.coderman.dao.UserMapper;
-import com.zhangyu.coderman.dto.CommentDTO;
-import com.zhangyu.coderman.dto.QuestionDTO;
-import com.zhangyu.coderman.dto.QuestionQueryDTO;
-import com.zhangyu.coderman.dto.ResultTypeDTO;
+import com.zhangyu.coderman.dao.*;
+import com.zhangyu.coderman.dto.*;
 import com.zhangyu.coderman.exception.CustomizeException;
-import com.zhangyu.coderman.modal.Comment;
-import com.zhangyu.coderman.modal.CommentExample;
-import com.zhangyu.coderman.modal.Question;
+import com.zhangyu.coderman.modal.*;
 import com.zhangyu.coderman.myenums.CustomizeErrorCode;
 import com.zhangyu.coderman.myenums.QuestionCategory;
 import com.zhangyu.coderman.myenums.QuestionErrorEnum;
+import com.zhangyu.coderman.myenums.QuestionSortType;
 import com.zhangyu.coderman.service.QuestionService;
 import com.zhangyu.coderman.utils.DateFormateUtil;
 import com.zhangyu.coderman.utils.DatesUtil;
+import org.apache.ibatis.annotations.Case;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -41,15 +35,24 @@ public class QuestionServiceImpl implements QuestionService {
     private UserMapper userMapper;
 
     @Autowired
+    private CollectMapper collectMapper;
+
+    @Autowired
     private CommentMapper commentMapper;
+
+    @Autowired
+    private TopicExtMapper topicExtMapper;
 
     @Autowired
     private QuestionExtMapper questionExtMapper;
 
     private  SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+//    @Autowired
+//    private HotTagCache hotTagCache;
+
     @Autowired
-    private HotTagCache hotTagCache;
+    private CollectExtMapper collectExtMapper;
 
     @Override
     public void doPublish(Question question) {
@@ -69,6 +72,7 @@ public class QuestionServiceImpl implements QuestionService {
     public PageInfo<Question> findQuestionsByUserId(Integer pageNo, Integer pageSize, Integer id) {
         PageHelper.startPage(pageNo,pageSize);
         List<Question> list = questionExtMapper.listQuestionWithUserByUserId(id);
+        BuildQuestionTime(list);
         PageInfo<Question> questionPageInfo = new PageInfo<>(list);
         questionPageInfo.setNavigatePages(3);
         return questionPageInfo;
@@ -89,19 +93,25 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public ResultTypeDTO saveOrUpdate(Question question, Integer userid) {
+    public ResultTypeDTO saveOrUpdate(Question question) {
         if(question.getId()==null){
             question.setGmtCreate(System.currentTimeMillis());
             question.setGmtModified(question.getGmtCreate());
             question.setViewCount(0);
             question.setCommentCount(0);
             question.setLikeCount(0);
+            //用户是否加入或者创建了话题
+            if(question.getTopic()!=0){
+                //加入话题,讨论数增加
+                topicExtMapper.incTalkCount(question.getTopic());
+                //创建话题，插入一天话题
+            }
             questionMapper.insert(question);
             return new ResultTypeDTO().okOf().addMsg("result", QuestionErrorEnum.QUESTION_PUBLISH_SUCCESS.getMsg());
         }else{
             Question dbQuestion = questionExtMapper.findQuestionWithUserById(question.getId());
             question.setGmtModified(question.getGmtCreate());
-            if(dbQuestion!=null&&dbQuestion.getCreator()!=userid){
+            if(dbQuestion!=null&& dbQuestion.getCreator()!=question.getUser().getId()){
                 return new ResultTypeDTO().errorOf(CustomizeErrorCode.QUESTION_NOT_IS_YOURS);
             }
             questionMapper.updateByPrimaryKeySelective(question);
@@ -117,7 +127,11 @@ public class QuestionServiceImpl implements QuestionService {
            String sqlRegex = tags.replaceAll(",", "|");
           relatedList =questionExtMapper.selectRelated(sqlRegex,question.getId());
        }
-        return relatedList;
+       if(relatedList.size()>15){
+           return relatedList.subList(0,15);
+       }else {
+           return relatedList;
+       }
     }
 
     @Override
@@ -139,6 +153,9 @@ public class QuestionServiceImpl implements QuestionService {
                 CommentDTO commentDTO = new CommentDTO();
                 BeanUtils.copyProperties(comment,commentDTO);
                 commentDTO.setUser(userMapper.selectByPrimaryKey(comment.getCommentor()));
+                String dateString = simpleDateFormat.format(new Date(comment.getGmtCreate()));
+                String time = DateFormateUtil.getTime(dateString);
+                commentDTO.setShowTime(time);
                 commentlist.add(commentDTO);
             }
         }
@@ -146,26 +163,37 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public PageInfo<Question> getPageBySearch(QuestionQueryDTO questionQueryDTO, Integer pageNo, Integer pageSize) {
+    public PageInfo<Question> getPageBySearch(QuestionQueryDTO questionQueryDTO) {
         List<Question> list=new ArrayList<>();
         PageInfo<Question> questionPageInfo;
-        PageHelper.startPage(pageNo,pageSize);
-        if ("all".equals(questionQueryDTO.getSort())){
+        PageHelper.startPage(questionQueryDTO.getPageNo(),questionQueryDTO.getPageSize());
+        String sortType=questionQueryDTO.getSort();
+
+        if ("ALL".equals(sortType)){
             //全部
-            list= questionExtMapper.listQuestionWithUserBySearch(questionQueryDTO.getSearch(),questionQueryDTO.getTag(),questionQueryDTO.getCategory());
-       }else if ("weekhot".equals(questionQueryDTO.getSort())){
+            list= questionExtMapper.listQuestionWithUserBySearch(questionQueryDTO);
+       }else if (QuestionSortType.WEEK_HOT.name().equals(sortType)){
            //本周最热
             long startweektime = DatesUtil.getBeginDayOfWeek().getTime();
             long endweetime=DatesUtil.getEndDayOfWeek().getTime();
-            list=questionExtMapper.listQuestionHotByTime(startweektime,endweetime,questionQueryDTO.getTag(),questionQueryDTO.getCategory());
-        }else if ("monthhot".equals(questionQueryDTO.getSort())){
+            questionQueryDTO.setBeginTime(startweektime);
+            questionQueryDTO.setEndTime(endweetime);
+            list=questionExtMapper.listQuestionHotByTime(questionQueryDTO);
+        }else if (QuestionSortType.MONTH_HOT.name().equals(sortType)){
             //月最热
-            long time = DatesUtil.getBeginDayOfMonth().getTime();
-            long endtime=DatesUtil.getEndDayOfMonth().getTime();
-            list=questionExtMapper.listQuestionHotByTime(time,endtime, questionQueryDTO.getTag(), questionQueryDTO.getCategory());
-        }else if("zerohot".equals(questionQueryDTO.getSort())){
+            long monthStartTime = DatesUtil.getBeginDayOfMonth().getTime();
+            long montthEndTime=DatesUtil.getEndDayOfMonth().getTime();
+            questionQueryDTO.setBeginTime(monthStartTime);
+            questionQueryDTO.setEndTime(montthEndTime);
+            list=questionExtMapper.listQuestionHotByTime(questionQueryDTO);
+        }else if(QuestionSortType.WAIT_COMMENT.name().equals(sortType)){
             //0评论
             list=questionExtMapper.listQuestionZeroHot(questionQueryDTO.getTag(),questionQueryDTO.getCategory());
+        }else if(QuestionSortType.LIKE_HOT.name().equals(questionQueryDTO.getSort())){
+            //赞最多
+            list=questionExtMapper.listQuestionMostLike(questionQueryDTO);
+        }else  if(QuestionSortType.COMMENT_HOT.name().equals(sortType)){
+            list=questionExtMapper.listQuestionMostComment(questionQueryDTO);
         }
         //时间格式化,typename
         BuildQuestionTime(list);
@@ -194,6 +222,60 @@ public class QuestionServiceImpl implements QuestionService {
         PageHelper.startPage(pageno,pagesize);
         List<QuestionDTO> questionDTOS= questionExtMapper.findRecommendQuestions();
         return questionDTOS;
+    }
+
+    @Override
+    public PageInfo<Question> getCollectPage(Integer pageNo, Integer pageSize, Integer userId) {
+
+        List<Integer> questionIds=collectExtMapper.findQuestionById(userId);
+        if(questionIds.size()==0){
+            return null;
+        }
+        PageHelper.startPage(pageNo,pageSize);
+        List<Question> questions=questionExtMapper.listQuestionCollectedWithUser(questionIds);
+        if(questionIds!=null&&questions.size()>0){
+            BuildQuestionTime(questions);
+        }
+        return new PageInfo<>(questions);
+    }
+
+    @Override
+    public List<User> findCollectUsers(Integer id) {
+        CollectExample example = new CollectExample();
+        CollectExample.Criteria criteria = example.createCriteria();
+        criteria.andQuestionIdEqualTo(id);
+        List<Collect> collects = collectMapper.selectByExample(example);
+        if(collects!=null){
+            ArrayList<User> objects = new ArrayList<>();
+            for (Collect collect : collects) {
+                User user = userMapper.selectByPrimaryKey(collect.getUserId());
+                objects.add(user);
+            }
+            return objects;
+        }
+        return null;
+    }
+
+    @Override
+    public PageInfo<Question> findQuestionsWithUserByTopic(TopicQueryDTO topicQueryDTO) {
+        PageHelper.startPage(topicQueryDTO.getPageNo(),topicQueryDTO.getPageSize());
+        List<Question> questionsWithUserByTopic=null;
+        switch (topicQueryDTO.getSortBy()){
+            case "all": questionsWithUserByTopic= questionExtMapper.findQuestionsWithUserByTopicAll(topicQueryDTO);
+                break;
+            case "jh": questionsWithUserByTopic= questionExtMapper.findQuestionsWithUserByTopicJH(topicQueryDTO);
+                break;
+            case "tj": questionsWithUserByTopic= questionExtMapper.findQuestionsWithUserByTopicTJ(topicQueryDTO);
+                break;
+            case "wt": questionsWithUserByTopic= questionExtMapper.findQuestionsWithUserByTopicWT(topicQueryDTO);
+                break;
+        }
+       if(questionsWithUserByTopic!=null&&questionsWithUserByTopic.size()>0){
+           //时间格式化,typename
+           BuildQuestionTime(questionsWithUserByTopic);
+           return new PageInfo<>(questionsWithUserByTopic);
+       }
+       return null;
     }
 
     private void BuildQuestionTime(List<Question> questions) {

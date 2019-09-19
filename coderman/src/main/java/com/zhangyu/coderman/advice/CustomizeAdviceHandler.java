@@ -23,10 +23,11 @@ public class CustomizeAdviceHandler {
         modelAndView.setViewName("error");
         if(e instanceof CustomizeException){
             modelAndView.addObject("errormessage",e.getMessage());
+            logger.info("自定义异常：{}",e.getMessage()+new Date());
             return modelAndView;
         }else {
             e.printStackTrace();
-           logger.error("服务异常:"+e.getMessage()+"time:"+new Date());
+           logger.error("服务异常:{}",e.getMessage()+"time:"+new Date());
             modelAndView.addObject("errormessage", CustomizeErrorCode.SYSTEM_Error.getMessage());
             return modelAndView;
         }

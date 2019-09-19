@@ -1,15 +1,14 @@
 
 package com.zhangyu.coderman.controller;
 
-import com.zhangyu.coderman.dto.AccessTokenDTO;
-import com.zhangyu.coderman.dto.BaiduAccessTokenDTO;
-import com.zhangyu.coderman.dto.BaiduUser;
-import com.zhangyu.coderman.dto.GithubUser;
+import com.zhangyu.coderman.dto.*;
 import com.zhangyu.coderman.modal.User;
 import com.zhangyu.coderman.provider.BaiduProvider;
 import com.zhangyu.coderman.provider.GithubProvider;
+import com.zhangyu.coderman.provider.QQProvider;
 import com.zhangyu.coderman.service.UserService;
 import com.zhangyu.coderman.utils.CookieUtils;
+import org.apache.http.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +40,9 @@ public class AuthorizeController {
     @Autowired
     private BaiduProvider baiduProvider;
 
+    @Autowired
+    private QQProvider qqProvider;
+
     @Value("${chatId}")
     private String chatId;
 
@@ -48,38 +50,160 @@ public class AuthorizeController {
     private String chatKey;
 
     @Value("${github.client.id}")
-    private String clientId;
+    private String github_clientId;
 
     @Value("${github.client.secret}")
-    private String clientSecret;
+    private String github_clientSecret;
 
     @Value("${github.client.redirecturi}")
-    private String RedirectUri;
+    private String github_RedirectUri;
+
+    @Value("${baidu.client.id}")
+    private String baidu_clientId;
+
+    @Value("${baidu.client.secret}")
+    private String baidu_clientSecret;
+
+    @Value("${baidu.client.redirecturi}")
+    private String baidu_RedirectUri;
+
+
+    @Value("${qq.client.id}")
+    private String qq_clientId;
+
+    @Value("${qq.client.secret}")
+    private String qq_clientSecret;
+
+    @Value("${qq.client.redirecturi}")
+    private String qq_RedirectUri;
+
+
+    /**
+     * qq登入的回调
+     *
+     * @return
+     */
+    @GetMapping("/qqcallback")
+    private String QQCallBack(@RequestParam("code") String code, HttpServletRequest request, HttpServletResponse response) {
+        QQAccessTokenDTO qqAccessTokenDTO = new QQAccessTokenDTO();
+        qqAccessTokenDTO.setClient_id(qq_clientId);
+        qqAccessTokenDTO.setRedirect_uri(qq_RedirectUri);
+        qqAccessTokenDTO.setCode(code);
+        qqAccessTokenDTO.setClient_secret(qq_clientSecret);
+        qqAccessTokenDTO.setGrant_type("authorization_code");
+        //获取access_token
+        String accessToken = qqProvider.getAccessToken(qqAccessTokenDTO);
+        //获取openId
+        String openId=qqProvider.getOpenId(accessToken);
+        //通过openId获取QQ用户信息
+        QQUser qqUser=qqProvider.getUserInfo(openId,qq_clientId,accessToken);
+        if (qqUser != null) {
+            //登入成功
+            User user = new User();
+            user.setAccountId(String.valueOf(openId));
+            user.setName(qqUser.getNickname());
+            user.setLocation(qqUser.getProvince()+qqUser.getCity());
+            user.setAvatarUrl(qqUser.getFigureurl_qq_1());
+            //token
+            String token = UUID.randomUUID().toString();
+            user.setToken(token);
+            userService.SaveOrUpdate(user);
+            Cookie c = new Cookie("token", token);
+            c.setMaxAge(3600 * 24);//设置cookie的时长为24小时(登入的token)
+            response.addCookie(c);
+            //登入成功
+            //logger.info("用户登入成功:{}",githubUser);
+            //注册聊天
+            long time = System.currentTimeMillis();
+            HttpSession session = request.getSession();
+            session.setAttribute("xlm_wid", chatId);
+            session.setAttribute("xlm_uid", openId);
+            session.setAttribute("xlm_name", qqUser.getNickname());
+            session.setAttribute("xlm_avatar", qqUser.getFigureurl_qq_1());
+            session.setAttribute("xlm_time", time);
+            String string = 14876 + "_" + openId + "_" + time + "_" + chatKey;
+            string = AuthorizeController.encryptPasswordWithSHA512(string).toLowerCase();
+            session.setAttribute("xlm_hash", string);
+            //聊天cookie
+            Cookie[] cookies = request.getCookies();
+            Cookie chatCookie = CookieUtils.findCookieByName(cookies, "JSESSIONID");
+            chatCookie.setMaxAge(3600 * 24);
+            session.setMaxInactiveInterval(3600 * 24);
+            response.addCookie(chatCookie);
+            return "redirect:/";
+        } else {
+            //登入失败
+            logger.error("用户登入失败:{}", qqUser);
+            return "redirect:/";
+        }
+
+    }
 
     /**
      * 百度
+     *
      * @param code
      * @param request
      * @param response
      * @return
      */
-    @GetMapping("/baiducallback")
-    private String BaiduCallBack(@RequestParam(name = "code") String code, HttpServletRequest request, HttpServletResponse response) {
+    @GetMapping("/baiduCallback")
+    private String baiduCallback(@RequestParam(name = "code") String code, HttpServletRequest request, HttpServletResponse response) {
         BaiduAccessTokenDTO baiduAccessTokenDTO = new BaiduAccessTokenDTO();
-        baiduAccessTokenDTO.setClient_id("51RRNd7IvCciSw5hmkhVmD2c");
-        baiduAccessTokenDTO.setClient_secret("odZgaURLEv1R0YVphxHMZrcBd9zkEni6");
-        baiduAccessTokenDTO.setRedirect_uri("http://localhost:8080/callback2");
+        baiduAccessTokenDTO.setClient_id(baidu_clientId);
+        baiduAccessTokenDTO.setClient_secret(baidu_clientSecret);
+        baiduAccessTokenDTO.setRedirect_uri(baidu_RedirectUri);
         baiduAccessTokenDTO.setCode(code);
         baiduAccessTokenDTO.setGrant_type("authorization_code");
         String accessToken = baiduProvider.getAccessToken(baiduAccessTokenDTO);
-        BaiduUser user = baiduProvider.getUser(accessToken);
         //百度用户用户
-        return null;
+        BaiduUser baiduUser = baiduProvider.getUser(accessToken);
+        if (baiduUser != null) {
+            //登入成功
+            User user = new User();
+            user.setAccountId(String.valueOf(baiduUser.getUserid()));
+            user.setName(baiduUser.getUsername());
+            user.setLocation(baiduUser.getLocation());
+            user.setAvatarUrl(baiduUser.getHeadImg());
+            //token
+            String token = UUID.randomUUID().toString();
+            user.setToken(token);
+            userService.SaveOrUpdate(user);
+            Cookie c = new Cookie("token", token);
+            c.setMaxAge(3600 * 24);//设置cookie的时长为24小时(登入的token)
+            response.addCookie(c);
+            //登入成功
+            //logger.info("用户登入成功:{}",githubUser);
+            //注册聊天
+            long time = System.currentTimeMillis();
+            HttpSession session = request.getSession();
+            session.setAttribute("xlm_wid", chatId);
+            session.setAttribute("xlm_uid", baiduUser.getUserid());
+            session.setAttribute("xlm_name", baiduUser.getUsername());
+            session.setAttribute("xlm_avatar", baiduUser.getHeadImg());
+            session.setAttribute("xlm_time", time);
+            String string = 14876 + "_" + baiduUser.getUserid() + "_" + time + "_" + chatKey;
+            string = AuthorizeController.encryptPasswordWithSHA512(string).toLowerCase();
+            session.setAttribute("xlm_hash", string);
+            //聊天cookie
+            Cookie[] cookies = request.getCookies();
+            Cookie chatCookie = CookieUtils.findCookieByName(cookies, "JSESSIONID");
+            chatCookie.setMaxAge(3600 * 24);
+            session.setMaxInactiveInterval(3600 * 24);
+            response.addCookie(chatCookie);
+            return "redirect:/";
+        } else {
+            //登入失败
+            logger.error("用户登入失败:{}", baiduUser);
+            return "redirect:/";
+        }
     }
+
     /**
-     * github
+     * github登入回调
+     *
      * @param code
-     * @param state
+     * @param
      * @param request
      * @param response
      * @return
@@ -87,13 +211,12 @@ public class AuthorizeController {
     @GetMapping("/callback")
     public String callback(@RequestParam(name = "code") String code, @RequestParam(name = "state") String state,
                            HttpServletRequest request, HttpServletResponse response, Model model) {
-
         AccessTokenDTO accessTokenDTO = new AccessTokenDTO();
         accessTokenDTO.setCode(code);
-        accessTokenDTO.setClient_id(clientId);
+        accessTokenDTO.setClient_id(github_clientId);
         accessTokenDTO.setState(state);
-        accessTokenDTO.setClient_secret(clientSecret);
-        accessTokenDTO.setRedirect_uri(RedirectUri);
+        accessTokenDTO.setClient_secret(github_clientSecret);
+        accessTokenDTO.setRedirect_uri(github_RedirectUri);
         String accessToken = githubProvider.getAccessToken(accessTokenDTO);
         GithubUser githubUser = githubProvider.getUser(accessToken);
         if (githubUser != null) {
@@ -111,35 +234,41 @@ public class AuthorizeController {
             user.setToken(token);
             userService.SaveOrUpdate(user);
             Cookie c = new Cookie("token", token);
-            c.setMaxAge(3600*2);//设置cookie的时长为2小时(登入的token)
+            c.setMaxAge(3600 * 24);//设置cookie的时长为24小时(登入的token)
             response.addCookie(c);
             //登入成功
             //logger.info("用户登入成功:{}",githubUser);
             //注册聊天
             long time = System.currentTimeMillis();
             HttpSession session = request.getSession();
-            session.setAttribute("xlm_wid",chatId);
-            session.setAttribute("xlm_uid",githubUser.getId());
-            session.setAttribute("xlm_name",githubUser.getName());
-            session.setAttribute("xlm_avatar",githubUser.getAvatar_url());
-            session.setAttribute("xlm_time",time);
-            String string= 14876+"_"+githubUser.getId()+"_"+time+"_"+chatKey;
+            session.setAttribute("xlm_wid", chatId);
+            session.setAttribute("xlm_uid", githubUser.getId());
+            session.setAttribute("xlm_name", githubUser.getName());
+            session.setAttribute("xlm_avatar", githubUser.getAvatar_url());
+            session.setAttribute("xlm_time", time);
+            String string = 14876 + "_" + githubUser.getId() + "_" + time + "_" + chatKey;
             string = AuthorizeController.encryptPasswordWithSHA512(string).toLowerCase();
-            session.setAttribute("xlm_hash",string);
+            session.setAttribute("xlm_hash", string);
             //聊天cookie
-            Cookie[] cookies=request.getCookies();
+            Cookie[] cookies = request.getCookies();
             Cookie chatCookie = CookieUtils.findCookieByName(cookies, "JSESSIONID");
-            chatCookie.setMaxAge(3600*2);
-            session.setMaxInactiveInterval(3600*2);
+            chatCookie.setMaxAge(3600 * 24);
+            session.setMaxInactiveInterval(3600 * 24);
             response.addCookie(chatCookie);
             return "redirect:/";
         } else {
             //登入失败
-            logger.error("用户登入失败:{}",githubUser);
+            logger.error("用户登入失败:{}", githubUser);
             return "redirect:/";
         }
     }
 
+    /**
+     * 聊天消息加密
+     *
+     * @param password
+     * @return
+     */
     public static String encryptPasswordWithSHA512(String password) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");  //创建SHA512类型的加密对象
@@ -163,6 +292,7 @@ public class AuthorizeController {
 
     /**
      * 退出登入
+     *
      * @return
      */
     @GetMapping("/logout")

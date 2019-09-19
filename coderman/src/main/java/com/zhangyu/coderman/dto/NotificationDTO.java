@@ -10,11 +10,51 @@ public class NotificationDTO<T> {
     //通知人的姓名
     private User notifier;
     //通知的类型
-    private CommentNotificationType commentNotificationType;
+    private String commentNotificationType;
     //外键信息
     private T item;
     //状态
     private Integer status;
+
+    private String showTime;
+
+    private String statusMsg;
+
+    private String msgTitle;
+
+    private String statusClass;
+
+    public String getShowTime() {
+        return showTime;
+    }
+
+    public String getStatusMsg() {
+        return statusMsg;
+    }
+
+    public String getMsgTitle() {
+        return msgTitle;
+    }
+
+    public String getStatusClass() {
+        return statusClass;
+    }
+
+    public void setStatusClass(String statusClass) {
+        this.statusClass = statusClass;
+    }
+
+    public void setMsgTitle(String msgTitle) {
+        this.msgTitle = msgTitle;
+    }
+
+    public void setStatusMsg(String statusMsg) {
+        this.statusMsg = statusMsg;
+    }
+
+    public void setShowTime(String showTime) {
+        this.showTime = showTime;
+    }
 
     private long gmtCreate;
 
@@ -42,11 +82,11 @@ public class NotificationDTO<T> {
         this.notifier = notifier;
     }
 
-    public CommentNotificationType getCommentNotificationType() {
+    public String getCommentNotificationType() {
         return commentNotificationType;
     }
 
-    public void setCommentNotificationType(CommentNotificationType commentNotificationType) {
+    public void setCommentNotificationType(String commentNotificationType) {
         this.commentNotificationType = commentNotificationType;
     }
 

@@ -20,8 +20,13 @@ public enum CustomizeErrorCode {
     NOT_FOND_CATEGORY("20012","找不到此类型"),
     NOT_ADD_OTHER_BQ("20013","暂时不支持其他平台的表情" ),
     COMMENT_CONTENT_TO_MANY("20014","评论的内容不能超过30个字" ),
-    READ_ALL_FAIL("20015","全部标为已读失败哦");
-
+    READ_ALL_FAIL("20015","全部标为已读失败哦"),
+    YOU_COLLECTED_QUESTION("20016","你已经收藏该问题" ),
+    NOT_FOUND_TOPIC("20017","你查找的话题不存在"),
+    FOLLOW_TOPIC_FAIL("20018","关注话题失败"),
+    FOLLOW_NEED_LOGIN("20019","登入后关注"),
+    TOPIC_IS_FOLLOWED("20020","你已经关注该话题"),
+    DELETE_NOTIFICATION_ERROR("20021","删除通知失败");
     private String message;
 
     private String code;

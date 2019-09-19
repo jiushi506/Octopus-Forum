@@ -6,7 +6,8 @@ public enum  CommentNotificationType {
     COMMENT_Like(3,"点赞了你的评论"),
     COMMENT_REPLY(2,"回复了你的评论"),
     LIKE_QUESTION(4,"点赞了问题"),
-    FOLLOWING(5,"关注了")
+    FOLLOWING(5,"关注了"),
+    FOLLOWING_YOU(5,"你")
     ;
 
     private String name;

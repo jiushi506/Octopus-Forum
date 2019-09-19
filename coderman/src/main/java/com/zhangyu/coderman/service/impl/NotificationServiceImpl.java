@@ -8,11 +8,15 @@ import com.zhangyu.coderman.dao.UserMapper;
 import com.zhangyu.coderman.dto.NotificationDTO;
 import com.zhangyu.coderman.modal.*;
 import com.zhangyu.coderman.myenums.CommentNotificationType;
+import com.zhangyu.coderman.myenums.QuestionCategory;
 import com.zhangyu.coderman.service.NotificationService;
+import com.zhangyu.coderman.utils.DateFormateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -23,11 +27,29 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private UserMapper userMapper;
 
+    private  SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     @Autowired
     private QuestionMapper questionMapper;
 
     @Autowired
     private CommentMapper commentMapper;
+
+    private void BuildNotificationTime(List<NotificationDTO> notificationDTOList) {
+        for (NotificationDTO notificationDTO : notificationDTOList) {
+            Date date = new Date(notificationDTO.getGmtCreate());
+            String dateString = simpleDateFormat.format(date);
+            String time = DateFormateUtil.getTime(dateString);
+            notificationDTO.setShowTime(time);
+            if(notificationDTO.getStatus()==0){
+                notificationDTO.setStatusMsg("已读");
+                notificationDTO.setStatusClass("label label-success");
+            }else {
+                notificationDTO.setStatusMsg("未读");
+                notificationDTO.setStatusClass("label label-danger");
+            }
+        }
+    }
 
     @Override
     public List<NotificationDTO> list(Integer pageNo, Integer pageSize, Integer id) {
@@ -42,11 +64,13 @@ public class NotificationServiceImpl implements NotificationService {
         if (notifications.size() > 0) {
             List<NotificationDTO> notificationDTOlist = new ArrayList<>();
             for (Notification notification : notifications) {
+
                 if (notification.getType() == CommentNotificationType.COMMENT_QUESTION.getCode()) {
                     NotificationDTO<Question> notificationDTO = new NotificationDTO();
                     Long notifier = notification.getNotifier();
                     int notfiterId = notifier.intValue();
                     User user = userMapper.selectByPrimaryKey(notfiterId);
+
                     //封装信息
                     CreateNotificationDTOCommentQuestion(notificationDTOlist, notification, notificationDTO, user);
                 } else if (notification.getType() == CommentNotificationType.COMMENT_REPLY.getCode()) {
@@ -77,6 +101,11 @@ public class NotificationServiceImpl implements NotificationService {
                 }
 
             }
+
+            //格式化时间
+            BuildNotificationTime(notificationDTOlist);
+
+
             return notificationDTOlist;
         }
         return new ArrayList<>();
@@ -95,8 +124,9 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDTO.setNotifier(user);
         notificationDTO.setStatus(notification.getStatus());
         notificationDTO.setGmtCreate(notification.getGmtCreate());
-        notificationDTO.setCommentNotificationType(CommentNotificationType.COMMENT_REPLY);
+        notificationDTO.setCommentNotificationType(CommentNotificationType.COMMENT_REPLY.getName());
         notificationDTO.setItem(commentMapper.selectByPrimaryKey(notification.getOutterId()));
+        notificationDTO.setMsgTitle(commentMapper.selectByPrimaryKey(notification.getOutterId()).getContent());
         notificationDTOlist.add(notificationDTO);
     }
 
@@ -113,7 +143,8 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDTO.setNotifier(user);
         notificationDTO.setStatus(notification.getStatus());
         notificationDTO.setGmtCreate(notification.getGmtCreate());
-        notificationDTO.setCommentNotificationType(CommentNotificationType.FOLLOWING);
+        notificationDTO.setCommentNotificationType(CommentNotificationType.FOLLOWING.getName());
+        notificationDTO.setMsgTitle(CommentNotificationType.FOLLOWING_YOU.getName());
         //notificationDTO.setItem(commentMapper.selectByPrimaryKey(notification.getOutterId()));
         notificationDTOlist.add(notificationDTO);
     }
@@ -131,8 +162,10 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDTO.setNotifier(user);
         notificationDTO.setGmtCreate(notification.getGmtCreate());
         notificationDTO.setStatus(notification.getStatus());
-        notificationDTO.setCommentNotificationType(CommentNotificationType.COMMENT_Like);
+        notificationDTO.setCommentNotificationType(CommentNotificationType.COMMENT_Like.getName());
         notificationDTO.setItem(commentMapper.selectByPrimaryKey(notification.getOutterId()));
+        notificationDTO.setMsgTitle(commentMapper.selectByPrimaryKey(notification.getOutterId()).getContent());
+
         notificationDTOlist.add(notificationDTO);
     }
 
@@ -149,9 +182,11 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDTO.setNotifier(user);
         notificationDTO.setGmtCreate(notification.getGmtCreate());
         notificationDTO.setStatus(notification.getStatus());
-        notificationDTO.setCommentNotificationType(CommentNotificationType.COMMENT_QUESTION);
+        notificationDTO.setCommentNotificationType(CommentNotificationType.COMMENT_QUESTION.getName());
         Question question = questionMapper.selectByPrimaryKey(notification.getOutterId());
         notificationDTO.setItem(question);
+        notificationDTO.setMsgTitle(question.getTitle());
+
         notificationDTOlist.add(notificationDTO);
     }
 
@@ -168,9 +203,10 @@ public class NotificationServiceImpl implements NotificationService {
         notificationDTO.setNotifier(user);
         notificationDTO.setGmtCreate(notification.getGmtCreate());
         notificationDTO.setStatus(notification.getStatus());
-        notificationDTO.setCommentNotificationType(CommentNotificationType.LIKE_QUESTION);
+        notificationDTO.setCommentNotificationType(CommentNotificationType.LIKE_QUESTION.getName());
         Question question = questionMapper.selectByPrimaryKey(notification.getOutterId());
         notificationDTO.setItem(question);
+        notificationDTO.setMsgTitle(question.getTitle());
         notificationDTOlist.add(notificationDTO);
     }
 }

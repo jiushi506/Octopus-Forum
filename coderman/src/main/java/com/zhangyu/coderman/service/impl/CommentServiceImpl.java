@@ -7,12 +7,15 @@ import com.zhangyu.coderman.modal.CommentExample;
 import com.zhangyu.coderman.modal.Question;
 import com.zhangyu.coderman.myenums.CommentType;
 import com.zhangyu.coderman.service.CommentService;
+import com.zhangyu.coderman.utils.DateFormateUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -26,6 +29,8 @@ public class CommentServiceImpl implements CommentService {
 
     @Autowired
     private CommentExtMapper commentExtMapper;
+
+    private  SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 
     @Autowired
@@ -49,6 +54,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentDTO> findSecondComments(Integer id) {
         CommentExample commentExample = new CommentExample();
+        commentExample.setOrderByClause("gmt_create desc");
         CommentExample.Criteria criteria = commentExample.createCriteria();
         criteria.andParentIdEqualTo(id);
         criteria.andTypeEqualTo(CommentType.COMMENT_TWO.getVal());
@@ -60,6 +66,9 @@ public class CommentServiceImpl implements CommentService {
                 CommentDTO commentDTO = new CommentDTO();
                 BeanUtils.copyProperties(comment,commentDTO);
                 commentDTO.setUser(userMapper.selectByPrimaryKey(comment.getCommentor()));
+                String dateString = simpleDateFormat.format(new Date(comment.getGmtCreate()));
+                String time = DateFormateUtil.getTime(dateString);
+                commentDTO.setShowTime(time);
                 commentDTOS.add(commentDTO);
             }
         }

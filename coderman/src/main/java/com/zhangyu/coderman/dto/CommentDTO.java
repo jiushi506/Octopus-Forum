@@ -22,9 +22,19 @@ public class CommentDTO {
 
     private Integer commentCount;
 
+    private String showTime;
+
 
     public Integer getId() {
         return id;
+    }
+
+    public String getShowTime() {
+        return showTime;
+    }
+
+    public void setShowTime(String showTime) {
+        this.showTime = showTime;
     }
 
     public void setId(Integer id) {

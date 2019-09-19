@@ -3,6 +3,7 @@ package com.zhangyu.coderman.cache;
 import com.github.pagehelper.PageHelper;
 import com.zhangyu.coderman.dao.QuestionMapper;
 import com.zhangyu.coderman.modal.Question;
+import com.zhangyu.coderman.modal.QuestionExample;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,8 +20,8 @@ public class TagTask {
     @Autowired
     private HotTagCache hotTagCache;
 
-    //30个小时更新一次热门
-    @Scheduled(fixedRate = 10000*6*30)
+    //20个小时更新一次热门
+    @Scheduled(fixedRate = 10000*6*20)
     public void printTest() {
         int pageNo = 1;
         int pageSize = 10;
@@ -29,11 +30,14 @@ public class TagTask {
         while (pageNo == 1 || questions.size() == pageSize) {
             //questions = questionExtMapper.findQuestionPage((pageNo - 1) * pageSize, pageSize);
             PageHelper.startPage(pageNo,pageSize);
-            questions=questionMapper.selectByExample(null);
+            QuestionExample example = new QuestionExample();
+            example.setOrderByClause("gmt_create desc");
+            questions=questionMapper.selectByExample(example);
             for (Question question : questions) {
                 String tagstr = question.getTag();
                 String[] tags = tagstr.split(",");
                 for (String tag : tags) {
+                    tag=tag.toLowerCase();
                     Integer integer = properties.get(tag);
                     if (integer != null) {
                         properties.put(tag, integer + 5 + question.getCommentCount());

@@ -22,7 +22,13 @@ public class HotTagCache {
         Map<String, Integer> map = HotTagCache.sortByValueDescending(this.properties);
         for(Map.Entry<String,Integer> entry:map.entrySet()){
             String key = entry.getKey();
-            objects.add(key);
+            if(key!=null&&key.length()!=1&&key.length()<15){
+                objects.add(key);
+            }
+        }
+        int size = objects.size();
+        if(size>=25){
+            return objects.subList(0,25);
         }
         return objects;
     }

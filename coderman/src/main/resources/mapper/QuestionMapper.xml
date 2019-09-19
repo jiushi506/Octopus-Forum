@@ -12,6 +12,7 @@
     <result column="tag" jdbcType="VARCHAR" property="tag" />
     <result column="creator" jdbcType="INTEGER" property="creator" />
     <result column="category" jdbcType="INTEGER" property="category" />
+    <result column="topic" jdbcType="INTEGER" property="topic" />
   </resultMap>
   <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.zhangyu.coderman.modal.Question">
     <result column="description" jdbcType="LONGVARCHAR" property="description" />
@@ -76,7 +77,7 @@
   </sql>
   <sql id="Base_Column_List">
     id, title, gmt_create, gmt_modified, comment_count, view_count, like_count, tag, 
-    creator, category
+    creator, category, topic
   </sql>
   <sql id="Blob_Column_List">
     description
@@ -133,11 +134,13 @@
     insert into question (id, title, gmt_create, 
       gmt_modified, comment_count, view_count, 
       like_count, tag, creator, 
-      category, description)
+      category, topic, description
+      )
     values (#{id,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, #{gmtCreate,jdbcType=BIGINT}, 
       #{gmtModified,jdbcType=BIGINT}, #{commentCount,jdbcType=INTEGER}, #{viewCount,jdbcType=INTEGER}, 
       #{likeCount,jdbcType=INTEGER}, #{tag,jdbcType=VARCHAR}, #{creator,jdbcType=INTEGER}, 
-      #{category,jdbcType=INTEGER}, #{description,jdbcType=LONGVARCHAR})
+      #{category,jdbcType=INTEGER}, #{topic,jdbcType=INTEGER}, #{description,jdbcType=LONGVARCHAR}
+      )
   </insert>
   <insert id="insertSelective" parameterType="com.zhangyu.coderman.modal.Question">
     insert into question
@@ -171,6 +174,9 @@
       </if>
       <if test="category != null">
         category,
+      </if>
+      <if test="topic != null">
+        topic,
       </if>
       <if test="description != null">
         description,
@@ -206,6 +212,9 @@
       </if>
       <if test="category != null">
         #{category,jdbcType=INTEGER},
+      </if>
+      <if test="topic != null">
+        #{topic,jdbcType=INTEGER},
       </if>
       <if test="description != null">
         #{description,jdbcType=LONGVARCHAR},
@@ -251,6 +260,9 @@
       <if test="record.category != null">
         category = #{record.category,jdbcType=INTEGER},
       </if>
+      <if test="record.topic != null">
+        topic = #{record.topic,jdbcType=INTEGER},
+      </if>
       <if test="record.description != null">
         description = #{record.description,jdbcType=LONGVARCHAR},
       </if>
@@ -271,6 +283,7 @@
       tag = #{record.tag,jdbcType=VARCHAR},
       creator = #{record.creator,jdbcType=INTEGER},
       category = #{record.category,jdbcType=INTEGER},
+      topic = #{record.topic,jdbcType=INTEGER},
       description = #{record.description,jdbcType=LONGVARCHAR}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -287,7 +300,8 @@
       like_count = #{record.likeCount,jdbcType=INTEGER},
       tag = #{record.tag,jdbcType=VARCHAR},
       creator = #{record.creator,jdbcType=INTEGER},
-      category = #{record.category,jdbcType=INTEGER}
+      category = #{record.category,jdbcType=INTEGER},
+      topic = #{record.topic,jdbcType=INTEGER}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -322,6 +336,9 @@
       <if test="category != null">
         category = #{category,jdbcType=INTEGER},
       </if>
+      <if test="topic != null">
+        topic = #{topic,jdbcType=INTEGER},
+      </if>
       <if test="description != null">
         description = #{description,jdbcType=LONGVARCHAR},
       </if>
@@ -339,6 +356,7 @@
       tag = #{tag,jdbcType=VARCHAR},
       creator = #{creator,jdbcType=INTEGER},
       category = #{category,jdbcType=INTEGER},
+      topic = #{topic,jdbcType=INTEGER},
       description = #{description,jdbcType=LONGVARCHAR}
     where id = #{id,jdbcType=INTEGER}
   </update>
@@ -352,8 +370,8 @@
       like_count = #{likeCount,jdbcType=INTEGER},
       tag = #{tag,jdbcType=VARCHAR},
       creator = #{creator,jdbcType=INTEGER},
-      category = #{category,jdbcType=INTEGER}
+      category = #{category,jdbcType=INTEGER},
+      topic = #{topic,jdbcType=INTEGER}
     where id = #{id,jdbcType=INTEGER}
   </update>
-
 </mapper>
