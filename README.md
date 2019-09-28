@@ -1,7 +1,7 @@
+## [在线地址](http://www.zykcoderman.xyz)
 
 ## 章鱼论坛
-
-暑假最近刚刚接触SpringBoot，感觉SpringBoot比起SSM大大的简化了配置，我们不需要向之前搭建SSM的环境啥的，SpringBoot的核心就是自动配置吧，因此写了一个简单的社区，现在项目已经部署上线，想要学习这个项目的可以来看看哟~。
+**暑假最近刚刚接触SpringBoot，感觉SpringBoot比起SSM大大的简化了配置，我们不需要向之前搭建SSM的环境啥的，SpringBoot的核心就是自动配置吧，因此写了一个简单的社区，现在项目已经部署上线，想要学习这个项目的可以来看看哟~。**
 
 ## 资料
 [Spring 文档](https://spring.io/guides)   
@@ -59,9 +59,133 @@
 15. 话题模块。创建问题的时候可以加入话题，关注话题，相关话题。
 16. 网站聊天室。
 17. 网站广告管理
-
 还有一些小功能就不具体说了,,如果你也是刚接触SpringBoot可以用这个项目练练手
 (做的不是很好请见谅!!!嘻嘻嘻)
+## 部署
+1. 服务器：阿里云ESC云服务器。
+2. 图片上传：阿里OSS对象存储。
+
+## 数据库脚本
+
+```sql
+问题表
+CREATE TABLE `question` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `title` varchar(200) CHARACTER SET utf8 DEFAULT NULL,
+  `description` text CHARACTER SET utf8,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `gmt_modified` bigint(20) DEFAULT NULL,
+  `comment_count` int(10) DEFAULT '0',
+  `view_count` int(10) DEFAULT '0',
+  `like_count` int(10) DEFAULT '0',
+  `tag` varchar(256) CHARACTER SET utf8 DEFAULT NULL,
+  `creator` int(10) DEFAULT NULL,
+  `category` int(10) DEFAULT NULL COMMENT '分类',
+  `topic` int(10) DEFAULT NULL COMMENT '属于的话题',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=258 DEFAULT CHARSET=utf8mb4
+用户表
+CREATE TABLE `user` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `account_id` varchar(100) DEFAULT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `token` char(36) DEFAULT NULL,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `gmt_modified` bigint(20) DEFAULT NULL,
+  `avatar_url` varchar(100) DEFAULT NULL,
+  `bio` varchar(120) DEFAULT NULL,
+  `location` varchar(50) DEFAULT NULL,
+  `company` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8
+通知表
+CREATE TABLE `notification` (
+  `id` int(20) NOT NULL AUTO_INCREMENT,
+  `notifier` bigint(20) DEFAULT NULL,
+  `receiver` bigint(20) DEFAULT NULL,
+  `type` int(11) DEFAULT NULL,
+  `outter_id` int(11) DEFAULT NULL COMMENT '外键,关联问题或评论',
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `status` int(11) DEFAULT '0' COMMENT '通知的状态,已读未读',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=510 DEFAULT CHARSET=utf8
+
+关注用户表
+Create Table
+CREATE TABLE `follow` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) DEFAULT NULL,
+  `followed_user` int(10) DEFAULT NULL,
+  `status` int(3) DEFAULT NULL,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8
+
+Create Table
+
+CREATE TABLE `collect` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) DEFAULT NULL,
+  `question_id` int(10) DEFAULT NULL,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `gmt_modified` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4
+问题点赞表
+Create Table
+CREATE TABLE `question_zan` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` int(100) DEFAULT NULL,
+  `question_id` bigint(20) DEFAULT NULL,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `gmt_modified` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4
+广告表
+Create Table
+
+CREATE TABLE `ad` (
+  `id` int(100) NOT NULL AUTO_INCREMENT,
+  `title` varchar(256) DEFAULT NULL,
+  `url` varchar(512) DEFAULT NULL,
+  `image` varchar(256) DEFAULT NULL,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `gmt_modified` bigint(20) DEFAULT NULL,
+  `gmt_start` bigint(20) DEFAULT NULL,
+  `gmt_end` bigint(20) DEFAULT NULL,
+  `status` int(20) DEFAULT NULL,
+  `postion` varchar(10) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4
+话题表
+CREATE TABLE `topic` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `title` varchar(100) NOT NULL,
+  `talk_count` bigint(20) DEFAULT NULL,
+  `follow_count` int(100) DEFAULT NULL,
+  `image` varchar(10000) DEFAULT NULL,
+  `simple_desc` varchar(256) DEFAULT NULL,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `gmt_modified` bigint(20) DEFAULT NULL,
+  `status` int(2) DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4
+问题收藏表
+Create Table
+
+CREATE TABLE `collect` (
+  `id` int(10) NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) DEFAULT NULL,
+  `question_id` int(10) DEFAULT NULL,
+  `gmt_create` bigint(20) DEFAULT NULL,
+  `gmt_modified` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4
+
+```
+
+
+
 
 # 演示
 
@@ -71,7 +195,7 @@
 ![项目展示](https://img-blog.csdnimg.cn/20190825100402717.PNG?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQzMjU3MTAz,size_16,color_FFFFFF,t_70)
 ![我的关注](https://img-blog.csdnimg.cn/20190825100441317.PNG?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQzMjU3MTAz,size_16,color_FFFFFF,t_70)
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/20190825100451284.PNG?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzQzMjU3MTAz,size_16,color_FFFFFF,t_70)
-[项目地址](http://www.zykcoderman.xyz)
+
 
 如果项目不能访问可能是正在更新可以添加
 楸楸（QQ）：3053161401
